@@ -1229,6 +1229,44 @@ function confirmOrderWhatsApp() {
   if (modalInstance) modalInstance.hide();
 }
 
+/**
+ * Downloads an image URL into a File object, for attaching to a Web
+ * Share. Tries a direct fetch first; if that fails (e.g. a Google Drive
+ * link that the browser blocks from cross-origin fetch), automatically
+ * retries through a public image proxy that adds proper CORS headers.
+ */
+async function fetchImageAsFile(imageUrl, filename) {
+  // Try 1: direct fetch
+  try {
+    const res = await fetch(imageUrl);
+    if (res.ok) {
+      const blob = await res.blob();
+      if (blob && blob.size > 0) {
+        return new File([blob], filename, { type: blob.type || 'image/jpeg' });
+      }
+    }
+  } catch (e) {
+    console.warn('Direct image fetch failed, trying proxy:', e);
+  }
+
+  // Try 2: CORS-friendly proxy fallback
+  try {
+    const stripped = imageUrl.replace(/^https?:\/\//, '');
+    const proxied = 'https://images.weserv.nl/?url=' + encodeURIComponent(stripped);
+    const res2 = await fetch(proxied);
+    if (res2.ok) {
+      const blob2 = await res2.blob();
+      if (blob2 && blob2.size > 0) {
+        return new File([blob2], filename, { type: blob2.type || 'image/jpeg' });
+      }
+    }
+  } catch (e) {
+    console.warn('Proxy image fetch also failed:', e);
+  }
+
+  return null;
+}
+
 /* =========================================================
    Share (photo + details + highlighting product link)
    ========================================================= */
@@ -1252,38 +1290,22 @@ async function shareProduct(code) {
     `👇 Check out this product on our website:\n${productLink}`;
 
   // 1) Preferred: share the photo together with the details as a caption.
-  // --- TEMPORARY DEBUG MODE: shows an alert at each decision point ---
   try {
-    if (!p.image) {
-      alert('DEBUG: இந்த product-க்கு image இல்லை (p.image காலி)');
-    } else if (!navigator.canShare) {
-      alert('DEBUG: இந்த browser navigator.canShare-ஐ ஆதரிக்கவில்லை');
-    } else {
-      alert('DEBUG: Image fetch பண்ண முயற்சிக்கிறேன்:\n' + p.image);
-      const response = await fetch(p.image);
-      alert('DEBUG: fetch முடிந்தது. status=' + response.status + ' ok=' + response.ok + ' type=' + response.type);
-      if (response.ok) {
-        const blob = await response.blob();
-        alert('DEBUG: blob கிடைத்தது. size=' + blob.size + ' type=' + blob.type);
-        const ext = (blob.type && blob.type.split('/')[1]) || 'jpg';
-        const file = new File([blob], `${p.name.replace(/\s+/g, '_')}.${ext}`, { type: blob.type || 'image/jpeg' });
+    if (p.image && navigator.canShare) {
+      const file = await fetchImageAsFile(p.image, `${p.name.replace(/\s+/g, '_')}.jpg`);
 
-        const shareable = navigator.canShare({ files: [file] });
-        alert('DEBUG: navigator.canShare({files}) = ' + shareable);
-
-        if (shareable) {
-          await navigator.share({
-            title: p.name,
-            text: shareText,
-            files: [file]
-          });
-          return;
-        }
+      if (file && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: p.name,
+          text: shareText,
+          files: [file]
+        });
+        return;
       }
     }
   } catch (err) {
-    alert('DEBUG: Error பிடிபட்டது:\n' + err.name + ': ' + err.message);
     if (err.name === 'AbortError') return;
+    console.warn('Photo share failed, falling back to text:', err);
   }
 
   // 2) Fallback: text share sheet (no image support). The link is already
