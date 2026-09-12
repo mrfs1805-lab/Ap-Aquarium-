@@ -1252,15 +1252,26 @@ async function shareProduct(code) {
     `👇 Check out this product on our website:\n${productLink}`;
 
   // 1) Preferred: share the photo together with the details as a caption.
+  // --- TEMPORARY DEBUG MODE: shows an alert at each decision point ---
   try {
-    if (p.image && navigator.canShare) {
+    if (!p.image) {
+      alert('DEBUG: இந்த product-க்கு image இல்லை (p.image காலி)');
+    } else if (!navigator.canShare) {
+      alert('DEBUG: இந்த browser navigator.canShare-ஐ ஆதரிக்கவில்லை');
+    } else {
+      alert('DEBUG: Image fetch பண்ண முயற்சிக்கிறேன்:\n' + p.image);
       const response = await fetch(p.image);
+      alert('DEBUG: fetch முடிந்தது. status=' + response.status + ' ok=' + response.ok + ' type=' + response.type);
       if (response.ok) {
         const blob = await response.blob();
+        alert('DEBUG: blob கிடைத்தது. size=' + blob.size + ' type=' + blob.type);
         const ext = (blob.type && blob.type.split('/')[1]) || 'jpg';
         const file = new File([blob], `${p.name.replace(/\s+/g, '_')}.${ext}`, { type: blob.type || 'image/jpeg' });
 
-        if (navigator.canShare({ files: [file] })) {
+        const shareable = navigator.canShare({ files: [file] });
+        alert('DEBUG: navigator.canShare({files}) = ' + shareable);
+
+        if (shareable) {
           await navigator.share({
             title: p.name,
             text: shareText,
@@ -1271,6 +1282,7 @@ async function shareProduct(code) {
       }
     }
   } catch (err) {
+    alert('DEBUG: Error பிடிபட்டது:\n' + err.name + ': ' + err.message);
     if (err.name === 'AbortError') return;
   }
 
