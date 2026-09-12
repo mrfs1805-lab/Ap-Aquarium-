@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AP Aquarium</title>
+<meta name="theme-color" content="#0d6efd">
+
+<!-- PWA: manifest + iOS installability meta tags -->
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AP Aquarium">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<style>
+body { background: #f8fafc; }
+
+.hero {
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.95), rgba(0, 180, 216, 0.95));
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  padding: 80px 20px;
+}
+
+.navbar-logo {
+  height: 40px;
+  width: auto;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+.navbar-logo-fallback {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  background: #0d6efd;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.product-card { border: none; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,.08); transition: transform 0.2s ease; }
+.product-card:hover { transform: translateY(-5px); }
+.product-img { height: 240px; object-fit: cover; cursor: pointer; }
+.footer { background: #111827; color: #fff; padding: 40px 0; }
+.whatsapp-float { position: fixed; right: 20px; bottom: 20px; z-index: 999; }
+.bottom-bar { display: none; }
+.control-bar { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+
+.map-container {
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.category-chip {
+  cursor: pointer;
+  border: 1px solid #dee2e6;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+}
+.category-chip .btn-del-cat {
+  border: none;
+  background: transparent;
+  color: #dc3545;
+  padding: 0 0 0 6px;
+  font-size: 0.75rem;
+}
+
+@media(max-width: 768px){
+  .bottom-bar { display: flex; position: fixed; bottom: 0; width: 100%; z-index: 999; }
+  body { padding-bottom: 60px; }
+}
+
+/* Install App popup */
+.install-popup {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translate(-50%, 140%);
+  width: min(420px, calc(100% - 24px));
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+  padding: 16px;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease;
+  pointer-events: none;
+}
+.install-popup.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.install-popup .install-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+.install-popup .install-text {
+  flex: 1;
+  min-width: 0;
+}
+.install-popup .install-text strong {
+  font-size: 0.95rem;
+  display: block;
+}
+.install-popup .install-text span {
+  font-size: 0.8rem;
+  color: #6b7280;
+  display: block;
+  margin-top: 1px;
+}
+.install-popup .install-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.install-popup .btn-install {
+  background: linear-gradient(135deg, #0d6efd, #00b4d8);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.install-popup .btn-close-install {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 1rem;
+  padding: 4px 6px;
+  line-height: 1;
+}
+.install-popup.ios-steps {
+  align-items: flex-start;
+}
+.install-popup .ios-instructions {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+.install-popup .ios-instructions i {
+  color: #0d6efd;
+}
+
+@media (max-width: 768px) {
+  .install-popup { bottom: 72px; }
+}
+
+/* Shared-link product highlight */
+@keyframes highlightPulse {
+  0% { box-shadow: 0 0 0 0 rgba(13,110,253,0.55); }
+  70% { box-shadow: 0 0 0 16px rgba(13,110,253,0); }
+  100% { box-shadow: 0 0 0 0 rgba(13,110,253,0); }
+}
+.product-highlight .product-card {
+  border: 2px solid #0d6efd;
+  animation: highlightPulse 1.4s ease-out 3;
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark sticky-top">
+  <div class="container d-flex justify-content-between align-items-center">
+    <a class="navbar-brand d-flex align-items-center" href="#">
+      <span class="navbar-logo-fallback" id="siteLogoFallback"><i class="fas fa-fish"></i></span>
+      <img alt="Logo" class="navbar-logo d-none" id="siteLogoImg">
+      <span id="siteNameNav">AP Aquarium</span>
+    </a>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-light btn-sm" id="adminAuthBtn" onclick="toggleAdminLogin()"><i class="fas fa-lock me-1"></i> Admin</button>
+      <a href="tel: 0756617669" class="btn btn-success btn-sm" id="navCallBtn"><i class="fas fa-phone me-1"></i> Call</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Admin Management Panel -->
+<section id="adminPanel" class="container mt-4 d-none">
+
+  <!-- Site Settings Manager -->
+  <div class="card border-success shadow-sm mb-3">
+    <div class="card-header bg-success text-white">
+      <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Site Settings</h6>
+    </div>
+    <div class="card-body">
+      <form id="settingsForm" onsubmit="handleSettingsSubmit(event)">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Business Name</label>
+            <input type="text" id="settingSiteName" class="form-control" placeholder="AP Aquarium">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Mobile Number (Call)</label>
+            <input type="text" id="settingPhone" class="form-control" placeholder="e.g. 0756617669">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">WhatsApp Number</label>
+            <input type="text" id="settingWhatsapp" class="form-control" placeholder="e.g. 94756617669 (with country code, no +)">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">WhatsApp Group Link</label>
+            <input type="url" id="settingWhatsappGroup" class="form-control" placeholder="https://chat.whatsapp.com/...">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Facebook Link</label>
+            <input type="url" id="settingFacebook" class="form-control" placeholder="https://facebook.com/...">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">TikTok Link</label>
+            <input type="url" id="settingTiktok" class="form-control" placeholder="https://tiktok.com/@...">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Map Latitude</label>
+            <input type="text" id="settingMapLat" class="form-control" placeholder="7.631175">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Map Longitude</label>
+            <input type="text" id="settingMapLng" class="form-control" placeholder="81.759429">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Address</label>
+            <input type="text" id="settingAddress" class="form-control" placeholder="Main Street, Puthukkudiyiruppu, Batticaloa">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Logo Image (leave blank to keep current)</label>
+            <input type="file" id="settingLogoFile" class="form-control" accept="image/*">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Background Photo (leave blank to keep current)</label>
+            <input type="file" id="settingBgFile" class="form-control" accept="image/*">
+          </div>
+
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-success" id="saveSettingsBtn"><i class="fas fa-save me-1"></i> Save Settings</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Manager -->
+  <div class="card border-info shadow-sm mb-3">
+    <div class="card-header bg-info text-white">
+      <h6 class="mb-0"><i class="fas fa-tags me-2"></i>Manage Categories</h6>
+    </div>
+    <div class="card-body">
+      <div class="input-group mb-3" style="max-width:400px;">
+        <input type="text" id="newCategoryInput" class="form-control" placeholder="e.g. Guppy, Molly, Betta">
+        <button class="btn btn-info text-white" onclick="addCategory()"><i class="fas fa-plus me-1"></i> Add</button>
+      </div>
+      <div class="d-flex flex-wrap gap-2" id="categoryChipList"></div>
+    </div>
+  </div>
+
+  <div class="card border-primary shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Admin Dashboard</h5>
+      <button class="btn btn-sm btn-danger" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
+    </div>
+    <div class="card-body">
+      <h6 class="fw-bold mb-3" id="formTitle">Add New Fish Variety</h6>
+      <form id="fishForm" onsubmit="handleFormSubmit(event)">
+        <input type="hidden" id="existingImage" value="">
+        <input type="hidden" id="existingVideo" value="">
+        <input type="hidden" id="editingCode" value="">
+        <div class="row g-3">
+          <div class="col-md-2">
+            <label class="form-label small fw-bold">Code No. (Auto)</label>
+            <input type="text" id="fishCode" class="form-control" readonly>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Variety Name</label>
+            <input type="text" id="fishName" class="form-control" placeholder="e.g. Red Rose Guppy" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Price per Pair (Rs.)</label>
+            <input type="number" step="0.01" id="fishPrice" class="form-control" placeholder="1200" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Stock Availability</label>
+            <select id="fishStock" class="form-select">
+              <option value="true">In Stock</option>
+              <option value="false">Out of Stock</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Category</label>
+            <select id="fishCategory" class="form-select">
+              <option value="">Uncategorized</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Upload Image</label>
+            <input type="file" id="fishImageFile" class="form-control" accept="image/*">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Upload Video (optional)</label>
+            <input type="file" id="fishVideoFile" class="form-control" accept="video/*">
+          </div>
+
+          <div class="col-12 text-end">
+            <button type="button" class="btn btn-secondary d-none" id="cancelEditBtn" onclick="resetForm()">Cancel Edit</button>
+            <button type="submit" class="btn btn-primary" id="saveBtn"><i class="fas fa-plus me-1"></i> Save Variety</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- Hero Section -->
+<section class="hero text-center" id="heroSection">
+  <h1 class="fw-bold display-5" id="siteNameHero">Ap Aquarium </h1>
+  <p class="lead fw-semibold">Delivery Available • Wholesale Available</p>
+  <div class="d-flex justify-content-center gap-2 mt-3">
+    <a href="tel: 0756617669" class="btn btn-warning fw-semibold" id="heroCallBtn"><i class="fas fa-phone me-1"></i> Call Now</a>
+    <a href="https://wa.me/94756617669" class="btn btn-success fw-semibold" id="heroWhatsappBtn"><i class="fab fa-whatsapp me-1"></i> WhatsApp</a>
+  </div>
+</section>
+
+<section class="container py-3 text-center d-flex justify-content-center gap-2 flex-wrap">
+  <a href="https://www.facebook.com/profile.php?id=61585207718993&sfnsn=wa" class="btn btn-primary btn-sm" target="_blank" id="facebookLinkBtn"><i class="fab fa-facebook me-1"></i> Facebook</a>
+  <a href="https://tiktok.com/@batti.guppy.house" class="btn btn-dark btn-sm" target="_blank" id="tiktokLinkBtn"><i class="fab fa-tiktok me-1"></i> TikTok</a>
+  <a href="https://chat.whatsapp.com/FdpiQort7mE0Wv2j5dtNOC?s=cl&p=a&mlu=1&ilr=0&amv=1" class="btn btn-success btn-sm" target="_blank" id="whatsappGroupBtn"><i class="fab fa-whatsapp me-1"></i> WhatsApp Group</a>
+</section>
+
+<!-- Filter Controls -->
+<section class="container my-3">
+  <div class="control-bar p-3">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label for="searchInput" class="form-label text-muted small fw-bold mb-1">Search Fish</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light"><i class="fas fa-search text-secondary"></i></span>
+          <input type="text" id="searchInput" class="form-control" placeholder="Search by name or code...">
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <label for="filterCategory" class="form-label text-muted small fw-bold mb-1">Category</label>
+        <select id="filterCategory" class="form-select">
+          <option value="all">All Categories</option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label for="sortBy" class="form-label text-muted small fw-bold mb-1">Sort By</label>
+        <select id="sortBy" class="form-select">
+          <option value="code">Variety No. (Ascending)</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="name">Name (A - Z)</option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label for="filterStock" class="form-label text-muted small fw-bold mb-1">Stock Availability</label>
+        <select id="filterStock" class="form-select">
+          <option value="all">All Varieties</option>
+          <option value="in-stock">In Stock Only</option>
+          <option value="out-of-stock">Out of Stock Only</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container pb-4">
+  <h2 class="text-center mb-4 fw-bold">Available Varieties</h2>
+  <div class="text-center mb-3" id="loadingIndicator">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted small mt-2">Loading varieties...</p>
+  </div>
+  <div class="row g-4" id="products"></div>
+
+  <div id="noResults" class="text-center py-5 d-none">
+    <i class="fas fa-fish-fins fa-3x text-muted mb-3"></i>
+    <h4 class="text-secondary">No guppies found</h4>
+    <p class="text-muted">Try adjusting your search criteria or reset filters.</p>
+    <button class="btn btn-outline-primary btn-sm mt-2" onclick="resetFilters()">Reset Filters</button>
+  </div>
+</section>
+
+<!-- Map Section -->
+<section class="container mb-5">
+  <h3 class="text-center fw-bold mb-3"><i class="fas fa-map-marker-alt text-danger me-2"></i>Visit Our Farm</h3>
+  <div class="map-container">
+    <iframe id="mapIframe" src="https://maps.google.com/?q=7.631273761517909,81.7598120123148&z=15&output=embed" width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+  </div>
+</section>
+
+<footer class="footer text-center">
+  <h3 id="siteNameFooter">AP Aquarium</h3>
+  <p class="mb-1" id="footerPhone"> 0756617669</p>
+  <p class="mb-1" id="footerAddress">Main Street, Puthukkudiyiruppu, Batticaloa</p>
+  <p class="small text-muted" id="footerGps">GPS:7.631175,81.759429 </p>
+</footer>
+
+<!-- Modals -->
+<div class="modal fade" id="imageModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <img id="modalImage" class="img-fluid rounded" alt="Fish Preview">
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="videoModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="videoTitle">Fish Video</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="stopVideo()"></button>
+      </div>
+      <div class="modal-body text-center p-0">
+        <div id="modalVideoContainer" style="min-height: 300px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Order Modal (with quantity selection) -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fab fa-whatsapp text-success me-2"></i>Order via WhatsApp</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="orderCode">
+        <input type="hidden" id="orderCategory">
+        <input type="hidden" id="orderName">
+        <input type="hidden" id="orderPrice">
+        <h6 class="fw-bold mb-1" id="orderModalName"></h6>
+        <div class="text-muted small mb-1">Variety No: <span id="orderModalCode"></span></div>
+        <div class="text-muted small mb-1" id="orderModalCategoryRow">Category: <span id="orderModalCategory"></span></div>
+        <div class="text-primary fw-bold mb-3">Rs. <span id="orderModalPrice"></span> / Pair</div>
+
+        <label class="form-label fw-bold small">Quantity (Pairs)</label>
+        <div class="input-group" style="max-width:170px;">
+          <button class="btn btn-outline-secondary" type="button" onclick="changeOrderQty(-1)"><i class="fas fa-minus"></i></button>
+          <input type="number" id="orderQty" class="form-control text-center" value="1" min="1">
+          <button class="btn btn-outline-secondary" type="button" onclick="changeOrderQty(1)"><i class="fas fa-plus"></i></button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success w-100" onclick="confirmOrderWhatsApp()"><i class="fab fa-whatsapp me-1"></i> Confirm Order via WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Install App Popup -->
+<div id="installPopup" class="install-popup" role="dialog" aria-live="polite">
+  <img alt="App icon" class="install-icon d-none" id="installIconImg">
+  <div class="install-text">
+    <strong>Install AP Aquarium</strong>
+    <span id="installSubtext">Add to your home screen for quick access</span>
+    <div id="iosInstructions" class="ios-instructions d-none">
+      Tap <i class="fas fa-arrow-up-from-bracket"></i> Share, then <strong>"Add to Home Screen"</strong>
+    </div>
+  </div>
+  <div class="install-actions">
+    <button class="btn-install" id="installActionBtn" onclick="handleInstallClick()">Install</button>
+    <button class="btn-close-install" onclick="dismissInstallPopup()" aria-label="Dismiss"><i class="fas fa-times"></i></button>
+  </div>
+</div>
+
+<a href="https://wa.me/94756617669" class="btn btn-success rounded-circle whatsapp-float p-3" id="floatWhatsappBtn"><i class="fab fa-whatsapp fa-2x"></i></a>
+
+<div class="bottom-bar">
+  <a href="tel: 0756617669" class="btn btn-warning flex-fill rounded-0" id="bottomCallBtn">Call</a>
+  <a href="https://wa.me/94756617669" class="btn btn-success flex-fill rounded-0" id="bottomWhatsappBtn">WhatsApp</a>
+  <a href="https://maps.google.com/?q=7.631175,81.759429" class="btn btn-primary flex-fill rounded-0" id="bottomMapBtn">Map </a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* =====================================================================
+   IMPORTANT: Paste your deployed Google Apps Script Web App URL below.
+   (Extensions > Apps Script > Deploy > New deployment > Web app > Copy URL)
+   ===================================================================== */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9A6CFhDgd6n-0moOndyc8gH5GYAaEI-ntx13OhSTUQUJxDWxjUi3bn3Zv87b_q2u_2A/exec";
+
+let products = [];
+let categories = [];
+let siteSettings = {};
+let isAdminLoggedIn = false;
+
+// Code of the product to highlight after a shared link is opened
+// (?product=CODE in the URL). Cleared once the highlight has been applied.
+let pendingHighlightCode = new URLSearchParams(window.location.search).get('product');
+
+const productsContainer = document.getElementById('products');
+const searchInput = document.getElementById('searchInput');
+const sortBy = document.getElementById('sortBy');
+const filterStock = document.getElementById('filterStock');
+const filterCategory = document.getElementById('filterCategory');
+const noResults = document.getElementById('noResults');
+const loadingIndicator = document.getElementById('loadingIndicator');
+
+// Check saved admin login session
+if (localStorage.getItem('ap_admin_auth') === 'true') {
+  setAdminState(true);
+}
+
+async function toggleAdminLogin() {
+  if (isAdminLoggedIn) {
+    document.getElementById('adminPanel').classList.toggle('d-none');
+    return;
+  }
+
+  const username = prompt("Enter Admin Username:");
+  if (!username) return;
+
+  const password = prompt("Enter Admin Password:");
+  if (!password) return;
+
+  verifyAdminSession(username, password);
+}
+
+async function callBackend(payload) {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  return response.json();
+}
+
+async function verifyAdminSession(username, password) {
+  try {
+    const data = await callBackend({ action: 'login', username, password });
+
+    if (data.status === 'success') {
+      setAdminState(true);
+      alert('Admin Login வெற்றிகரமாக முடிந்தது!');
+    } else {
+      alert(data.message || 'தவறான Username அல்லது Password!');
+      logoutAdmin();
+    }
+  } catch (e) {
+    console.error("Auth check error", e);
+    alert('சரிபார்ப்பில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.');
+  }
+}
+
+function setAdminState(loggedIn) {
+  isAdminLoggedIn = loggedIn;
+  if (loggedIn) {
+    localStorage.setItem('ap_admin_auth', 'true');
+    document.getElementById('adminPanel').classList.remove('d-none');
+    document.getElementById('adminAuthBtn').className = "btn btn-warning btn-sm";
+    document.getElementById('adminAuthBtn').innerHTML = `<i class="fas fa-user-cog me-1"></i> Dashboard`;
+    renderCategoryChips();
+    fetchNextCode();
+    populateSettingsForm();
+  } else {
+    localStorage.removeItem('ap_admin_auth');
+    document.getElementById('adminPanel').classList.add('d-none');
+    document.getElementById('adminAuthBtn').className = "btn btn-outline-light btn-sm";
+    document.getElementById('adminAuthBtn').innerHTML = `<i class="fas fa-lock me-1"></i> Admin`;
+  }
+  renderProducts();
+}
+
+function logoutAdmin() {
+  setAdminState(false);
+  resetForm();
+}
+
+async function fetchProducts() {
+  loadingIndicator.classList.remove('d-none');
+  try {
+    const response = await fetch(`${APPS_SCRIPT_URL}?action=get&_=${Date.now()}`, { cache: 'no-store' });
+    const result = await response.json();
+    if (result.status === 'success') {
+      products = result.data;
+      renderProducts();
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  } finally {
+    loadingIndicator.classList.add('d-none');
+  }
+}
+
+async function fetchCategories() {
+  try {
+    const response = await fetch(`${APPS_SCRIPT_URL}?action=getCategories&_=${Date.now()}`, { cache: 'no-store' });
+    const result = await response.json();
+    if (result.status === 'success') {
+      categories = result.data;
+      populateCategorySelects();
+      renderCategoryChips();
+    }
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+  }
+}
+
+async function fetchNextCode() {
+  try {
+    const response = await fetch(`${APPS_SCRIPT_URL}?action=getNextCode&_=${Date.now()}`, { cache: 'no-store' });
+    const result = await response.json();
+    if (result.status === 'success') {
+      document.getElementById('fishCode').value = result.code;
+      document.getElementById('editingCode').value = '';
+    }
+  } catch (error) {
+    console.error('Error fetching next code:', error);
+  }
+}
+
+/* =========================================================
+   Site Settings
+   ========================================================= */
+
+async function fetchSettings() {
+  try {
+    const response = await fetch(`${APPS_SCRIPT_URL}?action=getSettings&_=${Date.now()}`, { cache: 'no-store' });
+    const result = await response.json();
+    if (result.status === 'success') {
+      siteSettings = result.data || {};
+      applySettingsToPage();
+      populateSettingsForm();
+    }
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+  }
+}
+
+function applySettingsToPage() {
+  const s = siteSettings;
+
+  const siteName = s.siteName || 'AP Aquarium';
+  document.title = siteName;
+  ['siteNameNav', 'siteNameHero', 'siteNameFooter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = siteName;
+  });
+
+  applyLogoImage(s.logoImage);
+  applyHeroBackground(s.heroBgImage);
+
+  if (s.phone) {
+    const telHref = `tel: ${s.phone}`;
+    ['navCallBtn', 'heroCallBtn', 'bottomCallBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.href = telHref;
+    });
+    const footerPhone = document.getElementById('footerPhone');
+    if (footerPhone) footerPhone.textContent = ` ${s.phone}`;
+  }
+
+  if (s.whatsappNumber) {
+    const waBase = `https://wa.me/${s.whatsappNumber}`;
+    const heroWa = document.getElementById('heroWhatsappBtn');
+    if (heroWa) heroWa.href = waBase;
+    const floatWa = document.getElementById('floatWhatsappBtn');
+    if (floatWa) floatWa.href = waBase;
+    const bottomWa = document.getElementById('bottomWhatsappBtn');
+    if (bottomWa) bottomWa.href = waBase;
+  }
+
+  if (s.whatsappGroupLink) {
+    const el = document.getElementById('whatsappGroupBtn');
+    if (el) el.href = s.whatsappGroupLink;
+  }
+
+  if (s.facebookLink) {
+    const el = document.getElementById('facebookLinkBtn');
+    if (el) el.href = s.facebookLink;
+  }
+
+  if (s.tiktokLink) {
+    const el = document.getElementById('tiktokLinkBtn');
+    if (el) el.href = s.tiktokLink;
+  }
+
+  if (s.mapLat && s.mapLng) {
+    const mapIframe = document.getElementById('mapIframe');
+    if (mapIframe) mapIframe.src = `https://maps.google.com/?q=${s.mapLat},${s.mapLng}&z=15&output=embed`;
+
+    const bottomMap = document.getElementById('bottomMapBtn');
+    if (bottomMap) bottomMap.href = `https://maps.google.com/?q=${s.mapLat},${s.mapLng}`;
+
+    const footerGps = document.getElementById('footerGps');
+    if (footerGps) footerGps.textContent = `GPS:${s.mapLat},${s.mapLng} `;
+  }
+
+  if (s.address) {
+    const footerAddress = document.getElementById('footerAddress');
+    if (footerAddress) footerAddress.textContent = s.address;
+  }
+}
+
+/**
+ * Cache-busts a Google Drive image URL so the browser is forced to
+ * re-check with Drive instead of reusing a previously cached response
+ * for the same URL (this matters because the *file* behind a given
+ * thumbnail/preview link doesn't change, but the underlying content can
+ * be replaced on Drive without the URL itself changing).
+ */
+function bustCache(url) {
+  if (!url) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}cb=${Date.now()}`;
+}
+
+/**
+ * Preloads the logo with a plain Image() object before touching the DOM.
+ * If it fails to load (Drive blocked the hotlink, file not shared
+ * "Anyone with the link", wrong URL, etc.) we log the exact reason to
+ * the console and keep the fallback icon visible instead of showing a
+ * broken image — this is what to check in DevTools > Console if the
+ * logo still doesn't appear.
+ */
+function applyLogoImage(url) {
+  const img = document.getElementById('siteLogoImg');
+  const fallback = document.getElementById('siteLogoFallback');
+  if (!url) {
+    img.classList.add('d-none');
+    fallback.classList.remove('d-none');
+    return;
+  }
+
+  const tester = new Image();
+  tester.onload = () => {
+    img.src = bustCache(url);
+    img.classList.remove('d-none');
+    fallback.classList.add('d-none');
+    document.getElementById('installIconImg').src = bustCache(url);
+    document.getElementById('installIconImg').classList.remove('d-none');
+  };
+  tester.onerror = () => {
+    console.error('Logo image failed to load. Check that the Drive file is shared "Anyone with the link" and the URL is reachable:', url);
+    img.classList.add('d-none');
+    fallback.classList.remove('d-none');
+  };
+  tester.src = bustCache(url);
+}
+
+/**
+ * Same preload-then-swap approach for the hero background. Only
+ * replaces the plain gradient once the image has actually finished
+ * loading, so a blocked/broken Drive link never gets silently left in
+ * place — it logs the failure instead.
+ */
+function applyHeroBackground(url) {
+  const heroSection = document.getElementById('heroSection');
+  if (!url) return;
+
+  const tester = new Image();
+  tester.onload = () => {
+    heroSection.style.backgroundImage =
+      `linear-gradient(135deg, rgba(13, 110, 253, 0.55), rgba(0, 180, 216, 0.55)), url('${bustCache(url)}')`;
+  };
+  tester.onerror = () => {
+    console.error('Background photo failed to load. Check that the Drive file is shared "Anyone with the link" and the URL is reachable:', url);
+  };
+  tester.src = bustCache(url);
+}
+
+function populateSettingsForm() {
+  const s = siteSettings;
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.value = val;
+  };
+  setVal('settingSiteName', s.siteName);
+  setVal('settingPhone', s.phone);
+  setVal('settingWhatsapp', s.whatsappNumber);
+  setVal('settingWhatsappGroup', s.whatsappGroupLink);
+  setVal('settingFacebook', s.facebookLink);
+  setVal('settingTiktok', s.tiktokLink);
+  setVal('settingMapLat', s.mapLat);
+  setVal('settingMapLng', s.mapLng);
+  setVal('settingAddress', s.address);
+}
+
+async function handleSettingsSubmit(event) {
+  event.preventDefault();
+
+  const saveBtn = document.getElementById('saveSettingsBtn');
+  const originalBtnText = saveBtn.innerHTML;
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i> Saving...`;
+
+  try {
+    const payload = {
+      action: 'saveSettings',
+      siteName: document.getElementById('settingSiteName').value.trim(),
+      phone: document.getElementById('settingPhone').value.trim(),
+      whatsappNumber: document.getElementById('settingWhatsapp').value.trim(),
+      whatsappGroupLink: document.getElementById('settingWhatsappGroup').value.trim(),
+      facebookLink: document.getElementById('settingFacebook').value.trim(),
+      tiktokLink: document.getElementById('settingTiktok').value.trim(),
+      mapLat: document.getElementById('settingMapLat').value.trim(),
+      mapLng: document.getElementById('settingMapLng').value.trim(),
+      address: document.getElementById('settingAddress').value.trim()
+    };
+
+    const logoFile = document.getElementById('settingLogoFile').files[0];
+    if (logoFile) {
+      payload.logoImage = {
+        base64: await fileToBase64(logoFile),
+        name: logoFile.name,
+        type: logoFile.type
+      };
+    }
+
+    const bgFile = document.getElementById('settingBgFile').files[0];
+    if (bgFile) {
+      payload.heroBgImage = {
+        base64: await fileToBase64(bgFile),
+        name: bgFile.name,
+        type: bgFile.type
+      };
+    }
+
+    const result = await callBackend(payload);
+    if (result.status === 'success') {
+      alert('Settings saved successfully!');
+      document.getElementById('settingLogoFile').value = '';
+      document.getElementById('settingBgFile').value = '';
+      fetchSettings();
+    } else {
+      alert(result.message || 'Error saving settings.');
+    }
+  } catch (error) {
+    alert('An unexpected error occurred while saving settings.');
+    console.error(error);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = originalBtnText;
+  }
+}
+
+function populateCategorySelects() {
+  filterCategory.innerHTML = '<option value="all">All Categories</option>' +
+    categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  const fishCategory = document.getElementById('fishCategory');
+  const currentVal = fishCategory.value;
+  fishCategory.innerHTML = '<option value="">Uncategorized</option>' +
+    categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  fishCategory.value = currentVal;
+}
+
+function renderCategoryChips() {
+  const list = document.getElementById('categoryChipList');
+  if (!list) return;
+  if (categories.length === 0) {
+    list.innerHTML = '<span class="text-muted small">No categories yet. Add one above.</span>';
+    return;
+  }
+  list.innerHTML = categories.map(c => `
+    <span class="category-chip bg-light">
+      ${c}
+      <button type="button" class="btn-del-cat" onclick="deleteCategory('${c}')" title="Delete category">
+        <i class="fas fa-times"></i>
+      </button>
+    </span>
+  `).join('');
+}
+
+async function addCategory() {
+  const input = document.getElementById('newCategoryInput');
+  const value = input.value.trim();
+  if (!value) return;
+  if (categories.includes(value)) {
+    alert('இந்த Category ஏற்கனவே உள்ளது!');
+    return;
+  }
+  try {
+    const result = await callBackend({ action: 'addCategory', category: value });
+    if (result.status === 'success') {
+      input.value = '';
+      fetchCategories();
+    } else {
+      alert(result.message || 'Category சேர்க்க முடியவில்லை.');
+    }
+  } catch (e) {
+    alert('பிழை ஏற்பட்டது.');
+  }
+}
+
+async function deleteCategory(category) {
+  if (!confirm(`"${category}" category-ஐ நீக்க வேண்டுமா?`)) return;
+  try {
+    const result = await callBackend({ action: 'deleteCategory', category });
+    if (result.status === 'success') {
+      fetchCategories();
+    } else {
+      alert(result.message || 'Category நீக்க முடியவில்லை.');
+    }
+  } catch (e) {
+    alert('பிழை ஏற்பட்டது.');
+  }
+}
+
+function renderProducts() {
+  let filtered = products.filter(p => {
+    const searchMatch = p.name.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                        String(p.code).toLowerCase().includes(searchInput.value.toLowerCase());
+
+    let stockMatch = true;
+    if (filterStock.value === 'in-stock') stockMatch = p.stock === true;
+    if (filterStock.value === 'out-of-stock') stockMatch = p.stock === false;
+
+    let categoryMatch = true;
+    if (filterCategory.value !== 'all') categoryMatch = p.category === filterCategory.value;
+
+    return searchMatch && stockMatch && categoryMatch;
+  });
+
+  filtered.sort((a, b) => {
+    switch (sortBy.value) {
+      case 'price-asc': return a.price - b.price;
+      case 'price-desc': return b.price - a.price;
+      case 'name': return a.name.localeCompare(b.name);
+      default: {
+        const numA = parseInt(String(a.code).replace(/\D/g, ''), 10) || 0;
+        const numB = parseInt(String(b.code).replace(/\D/g, ''), 10) || 0;
+        return numA - numB;
+      }
+    }
+  });
+
+  if (filtered.length === 0) {
+    productsContainer.innerHTML = '';
+    noResults.classList.remove('d-none');
+    return;
+  }
+
+  noResults.classList.add('d-none');
+  productsContainer.innerHTML = filtered.map(p => `
+    <div class="col-md-4" id="product-card-${p.code}">
+      <div class="card product-card h-100">
+        <img src="${p.image || 'https://via.placeholder.com/300x200?text=No+Image'}" class="product-img" onclick="showImage('${p.image}')" alt="${p.name}" onerror="this.src='https://via.placeholder.com/300x200?text=Image+Not+Found'">
+        <div class="card-body d-flex flex-column justify-content-between">
+          <div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-dark">Variety No: ${p.code}</span>
+              <span class="badge ${p.stock ? 'bg-success' : 'bg-danger'}">${p.stock ? 'In Stock' : 'No Stock'}</span>
+            </div>
+            ${p.category ? `<span class="badge bg-secondary mb-2">${p.category}</span>` : ''}
+            <h5 class="card-title fw-bold">${p.name}</h5>
+            <h4 class="text-primary fw-bold me-auto">Rs. ${parseFloat(p.price).toFixed(2)} <small class="fs-6 text-muted">/ Pair</small></h4>
+
+            ${p.video ? `
+              <button class="btn btn-outline-danger btn-sm w-100 mt-2 mb-1" onclick="playVideo('${p.video}', '${p.name}')">
+                <i class="fas fa-play-circle me-1"></i> Watch Video
+              </button>
+            ` : ''}
+          </div>
+
+          <div>
+            ${isAdminLoggedIn ? `
+              <div class="btn-group w-100 mt-3">
+                <button class="btn btn-warning btn-sm" onclick="editProduct('${p.code}')"><i class="fas fa-edit me-1"></i> Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.code}', '${p.name}')"><i class="fas fa-trash me-1"></i> Delete</button>
+              </div>
+            ` : ''}
+
+            <div class="d-flex gap-2 mt-2">
+              <button class="btn btn-success flex-grow-1" ${!p.stock ? 'disabled' : ''} onclick="openOrderModal('${p.code}')">
+                <i class="fab fa-whatsapp me-1"></i> ${p.stock ? 'Order' : 'Out of Stock'}
+              </button>
+              <button class="btn btn-outline-primary" onclick="shareProduct('${p.code}')" title="Share this fish" aria-label="Share">
+                <i class="fas fa-share-alt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  highlightProductIfNeeded();
+}
+
+/**
+ * If the page was opened via a shared product link (?product=CODE),
+ * scroll to that product card and pulse-highlight it once it's on the
+ * page. Runs after every renderProducts() call, but only acts the first
+ * time the target card is actually found, then clears itself so it
+ * never re-triggers on later filter/sort re-renders.
+ */
+function highlightProductIfNeeded() {
+  if (!pendingHighlightCode) return;
+  const el = document.getElementById(`product-card-${pendingHighlightCode}`);
+  if (!el) return;
+
+  pendingHighlightCode = null;
+  setTimeout(() => {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('product-highlight');
+    setTimeout(() => el.classList.remove('product-highlight'), 4500);
+  }, 150);
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleFormSubmit(event) {
+  event.preventDefault();
+
+  const saveBtn = document.getElementById('saveBtn');
+  const originalBtnText = saveBtn.innerHTML;
+
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i> Uploading... Please wait`;
+
+  try {
+    const payload = {
+      action: 'save',
+      code: document.getElementById('editingCode').value.trim(),
+      name: document.getElementById('fishName').value.trim(),
+      price: document.getElementById('fishPrice').value,
+      stock: document.getElementById('fishStock').value,
+      category: document.getElementById('fishCategory').value,
+      existingImage: document.getElementById('existingImage').value,
+      existingVideo: document.getElementById('existingVideo').value
+    };
+
+    const imgFile = document.getElementById('fishImageFile').files[0];
+    if (imgFile) {
+      payload.image = {
+        base64: await fileToBase64(imgFile),
+        name: imgFile.name,
+        type: imgFile.type
+      };
+    }
+
+    const vidFile = document.getElementById('fishVideoFile').files[0];
+    if (vidFile) {
+      payload.video = {
+        base64: await fileToBase64(vidFile),
+        name: vidFile.name,
+        type: vidFile.type
+      };
+    }
+
+    const result = await callBackend(payload);
+    if (result.status === 'success') {
+      alert('Variety saved successfully!');
+      resetForm();
+      fetchProducts();
+    } else {
+      alert(result.message || 'Error saving data.');
+    }
+  } catch (error) {
+    alert('An unexpected error occurred during upload.');
+    console.error(error);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = originalBtnText;
+  }
+}
+
+function editProduct(code) {
+  const p = products.find(item => String(item.code) === String(code));
+  if (!p) return;
+
+  document.getElementById('fishCode').value = p.code;
+  document.getElementById('editingCode').value = p.code;
+  document.getElementById('fishName').value = p.name;
+  document.getElementById('fishPrice').value = p.price;
+  document.getElementById('fishStock').value = p.stock ? 'true' : 'false';
+  document.getElementById('fishCategory').value = p.category || '';
+  document.getElementById('existingImage').value = p.image || '';
+  document.getElementById('existingVideo').value = p.video || '';
+
+  document.getElementById('formTitle').innerText = "Edit Fish Variety No: " + p.code;
+  document.getElementById('saveBtn').innerHTML = `<i class="fas fa-save me-1"></i> Update Variety`;
+  document.getElementById('cancelEditBtn').classList.remove('d-none');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteProduct(code, name) {
+  if (confirm(`Are you sure you want to delete "${name}"?`)) {
+    try {
+      const result = await callBackend({ action: 'delete', code });
+      if (result.status === 'success') {
+        fetchProducts();
+      } else {
+        alert('Delete failed');
+      }
+    } catch (e) {
+      alert('Delete failed');
+    }
+  }
+}
+
+function resetForm() {
+  document.getElementById('fishForm').reset();
+  document.getElementById('existingImage').value = '';
+  document.getElementById('existingVideo').value = '';
+  document.getElementById('editingCode').value = '';
+  document.getElementById('formTitle').innerText = "Add New Fish Variety";
+  document.getElementById('saveBtn').innerHTML = `<i class="fas fa-plus me-1"></i> Save Variety`;
+  document.getElementById('cancelEditBtn').classList.add('d-none');
+  fetchNextCode();
+}
+
+function showImage(src) {
+  document.getElementById('modalImage').src = src;
+  new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+
+function playVideo(src, title) {
+  document.getElementById('videoTitle').innerText = title;
+  const container = document.getElementById('modalVideoContainer');
+
+  if (src.includes('drive.google.com')) {
+    // Google Drive videos must be embedded via iframe — Drive does not
+    // reliably stream raw bytes to a plain <video src="..."> tag.
+    container.innerHTML = `<iframe src="${src}" width="100%" height="400" style="border:0;" allow="autoplay" allowfullscreen></iframe>`;
+  } else {
+    container.innerHTML = `<video id="modalVideo" controls autoplay class="w-100 rounded-bottom" style="max-height: 70vh;" src="${src}"></video>`;
+  }
+
+  new bootstrap.Modal(document.getElementById('videoModal')).show();
+}
+
+function stopVideo() {
+  // Clearing the container stops iframe/video playback reliably.
+  document.getElementById('modalVideoContainer').innerHTML = '';
+}
+
+/* =========================================================
+   Order (with quantity selection)
+   ========================================================= */
+
+function openOrderModal(code) {
+  const p = products.find(item => String(item.code) === String(code));
+  if (!p) return;
+
+  document.getElementById('orderCode').value = p.code;
+  document.getElementById('orderCategory').value = p.category || '';
+  document.getElementById('orderName').value = p.name;
+  document.getElementById('orderPrice').value = p.price;
+
+  document.getElementById('orderModalName').textContent = p.name;
+  document.getElementById('orderModalCode').textContent = p.code;
+  document.getElementById('orderModalPrice').textContent = parseFloat(p.price).toFixed(2);
+
+  const categoryRow = document.getElementById('orderModalCategoryRow');
+  if (p.category) {
+    document.getElementById('orderModalCategory').textContent = p.category;
+    categoryRow.classList.remove('d-none');
+  } else {
+    categoryRow.classList.add('d-none');
+  }
+
+  document.getElementById('orderQty').value = 1;
+
+  new bootstrap.Modal(document.getElementById('orderModal')).show();
+}
+
+function changeOrderQty(delta) {
+  const input = document.getElementById('orderQty');
+  let val = parseInt(input.value, 10) || 1;
+  val = Math.max(1, val + delta);
+  input.value = val;
+}
+
+function confirmOrderWhatsApp() {
+  const code = document.getElementById('orderCode').value;
+  const category = document.getElementById('orderCategory').value;
+  const name = document.getElementById('orderName').value;
+  const price = document.getElementById('orderPrice').value;
+  const qty = Math.max(1, parseInt(document.getElementById('orderQty').value, 10) || 1);
+
+  const orderNumber = (siteSettings && siteSettings.whatsappNumber) ? siteSettings.whatsappNumber : '94743050233';
+
+  const message =
+    `Hello\n\n` +
+    `Code No: ${code}\n` +
+    `Category: ${category || '-'}\n` +
+    `Variety Name: ${name}\n` +
+    `Price per Pair: Rs. ${parseFloat(price).toFixed(2)}\n` +
+    `Qty: ${qty}\n\n` +
+    `Please confirm availability.`;
+
+  window.open(`https://wa.me/${orderNumber}?text=${encodeURIComponent(message)}`, '_blank');
+
+  const modalEl = document.getElementById('orderModal');
+  const modalInstance = bootstrap.Modal.getInstance(modalEl);
+  if (modalInstance) modalInstance.hide();
+}
+
+/* =========================================================
+   Share (photo + details + highlighting product link)
+   ========================================================= */
+
+async function shareProduct(code) {
+  const p = products.find(item => String(item.code) === String(code));
+  if (!p) return;
+
+  const phone = (siteSettings && siteSettings.phone) ? siteSettings.phone : '0756617669';
+  const siteName = siteSettings.siteName || 'AP Aquarium';
+
+  // Link that, when opened, scrolls to and highlights this exact variety.
+  const baseUrl = window.location.href.split('#')[0].split('?')[0];
+  const productLink = `${baseUrl}?product=${encodeURIComponent(p.code)}`;
+
+  const shareText =
+    `${p.name}\n` +
+    `Code No: ${p.code}\n` +
+    `Price: Rs. ${parseFloat(p.price).toFixed(2)} / Pair\n\n` +
+    `${siteName} (${phone})\n\n` +
+    `👇 Check out this product on our website:\n${productLink}`;
+
+  // 1) Preferred: share the photo together with the details as a caption.
+  try {
+    if (p.image && navigator.canShare) {
+      const response = await fetch(p.image);
+      if (response.ok) {
+        const blob = await response.blob();
+        const ext = (blob.type && blob.type.split('/')[1]) || 'jpg';
+        const file = new File([blob], `${p.name.replace(/\s+/g, '_')}.${ext}`, { type: blob.type || 'image/jpeg' });
+
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: p.name,
+            text: shareText,
+            files: [file]
+          });
+          return;
+        }
+      }
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+  }
+
+  // 2) Fallback: text + link share sheet (no image support).
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: p.name,
+        text: shareText,
+        url: productLink
+      });
+      return;
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+  }
+
+  // 3) Last resort: open WhatsApp directly with the text (link included).
+  window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+}
+
+function resetFilters() {
+  searchInput.value = '';
+  sortBy.value = 'code';
+  filterStock.value = 'all';
+  filterCategory.value = 'all';
+  renderProducts();
+}
+
+searchInput.addEventListener('input', renderProducts);
+sortBy.addEventListener('change', renderProducts);
+filterStock.addEventListener('change', renderProducts);
+filterCategory.addEventListener('change', renderProducts);
+
+fetchSettings();
+fetchCategories();
+fetchProducts();
+
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then((reg) => reg.update())
+      .catch((err) => console.warn('Service worker error:', err));
+  });
+
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}
+
+// PWA Custom Install Popup
+const INSTALL_DISMISS_KEY = 'ap_install_dismissed_at';
+const INSTALL_DISMISS_DAYS = 7;
+let deferredInstallPrompt = null;
+const installPopup = document.getElementById('installPopup');
+const installActionBtn = document.getElementById('installActionBtn');
+const installSubtext = document.getElementById('installSubtext');
+const iosInstructions = document.getElementById('iosInstructions');
+
+function isRunningStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function isIos() {
+  return /iphone|ipad|ipod/i.test(window.navigator.userAgent) && !window.MSStream;
+}
+
+function wasRecentlyDismissed() {
+  const last = localStorage.getItem(INSTALL_DISMISS_KEY);
+  if (!last) return false;
+  return ((Date.now() - parseInt(last, 10)) / (1000 * 60 * 60 * 24)) < INSTALL_DISMISS_DAYS;
+}
+
+function showInstallPopup() {
+  if (isRunningStandalone() || wasRecentlyDismissed()) return;
+  installPopup.classList.add('show');
+}
+
+function dismissInstallPopup() {
+  installPopup.classList.remove('show');
+  localStorage.setItem(INSTALL_DISMISS_KEY, Date.now().toString());
+}
+
+async function handleInstallClick() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installPopup.classList.remove('show');
+    if (outcome === 'accepted') {
+      localStorage.removeItem(INSTALL_DISMISS_KEY);
+    } else {
+      localStorage.setItem(INSTALL_DISMISS_KEY, Date.now().toString());
+    }
+    return;
+  }
+
+  if (isIos()) {
+    iosInstructions.classList.remove('d-none');
+    installSubtext.classList.add('d-none');
+    installActionBtn.classList.add('d-none');
+    return;
+  }
+
+  dismissInstallPopup();
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  setTimeout(showInstallPopup, 1500);
+});
+
+window.addEventListener('appinstalled', () => {
+  installPopup.classList.remove('show');
+  localStorage.removeItem(INSTALL_DISMISS_KEY);
+  deferredInstallPrompt = null;
+});
+
+if (isIos() && !isRunningStandalone()) {
+  setTimeout(showInstallPopup, 1500);
+}
+</script>
+</body>
+</html>
