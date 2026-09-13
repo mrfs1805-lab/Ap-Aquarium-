@@ -1,0 +1,24 @@
+{
+  "name": "AP Aquarium",
+  "short_name": "AP Aquarium",
+  "description": "AP Aquarium - Delivery Available, Wholesale Available",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0d6efd",
+  "icons": [
+    {
+      "src": "https://drive.google.com/thumbnail?id=1q0j1zNz51Jao_AKjVGKhAi8u8qpw39Wu&sz=w1000",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://drive.google.com/thumbnail?id=1q0j1zNz51Jao_AKjVGKhAi8u8qpw39Wu&sz=w1000",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
