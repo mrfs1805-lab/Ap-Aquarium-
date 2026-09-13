@@ -52,7 +52,20 @@ body { background: #f8fafc; }
 .product-card:hover { transform: translateY(-5px); }
 .product-img { height: 240px; object-fit: cover; cursor: pointer; }
 .footer { background: #111827; color: #fff; padding: 40px 0; }
-.whatsapp-float { position: fixed; right: 20px; bottom: 20px; z-index: 999; }
+.cart-float { position: fixed; right: 20px; bottom: 20px; z-index: 999; }
+.cart-float .cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 0.7rem;
+  min-width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+}
 .bottom-bar { display: none; }
 .control-bar { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 
@@ -80,6 +93,10 @@ body { background: #f8fafc; }
 @media(max-width: 768px){
   .bottom-bar { display: flex; position: fixed; bottom: 0; width: 100%; z-index: 999; }
   body { padding-bottom: 60px; }
+  /* On mobile the Cart is already in the fixed bottom bar, so the
+     separate floating cart button (used on desktop) is hidden here
+     to avoid showing it twice. */
+  .cart-float { display: none; }
 }
 
 /* Install App popup */
@@ -521,12 +538,12 @@ body { background: #f8fafc; }
   </div>
 </div>
 
-<!-- Order Modal (with quantity selection) -->
+<!-- Order / Add to Cart Modal (with quantity selection) -->
 <div class="modal fade" id="orderModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="fab fa-whatsapp text-success me-2"></i>Order via WhatsApp</h5>
+        <h5 class="modal-title" id="orderModalTitle"><i class="fab fa-whatsapp text-success me-2"></i>Order</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -545,10 +562,51 @@ body { background: #f8fafc; }
           <input type="number" id="orderQty" class="form-control text-center" value="1" min="1">
           <button class="btn btn-outline-secondary" type="button" onclick="changeOrderQty(1)"><i class="fas fa-plus"></i></button>
         </div>
+        <div class="text-muted small mt-2">Line Total: Rs. <span id="orderModalLineTotal">0.00</span></div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-success w-100" onclick="confirmOrderWhatsApp()"><i class="fab fa-whatsapp me-1"></i> Confirm Order via WhatsApp</button>
+      <div class="modal-footer flex-column align-items-stretch gap-2">
+        <button class="btn btn-success w-100" id="orderNowBtn" onclick="placeSingleOrderWhatsApp()"><i class="fab fa-whatsapp me-1"></i> Order Now</button>
+        <button class="btn btn-primary w-100" id="addToCartBtn" onclick="addCurrentSelectionToCart()"><i class="fas fa-cart-plus me-1"></i> Add to Cart</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cart Modal (multiple varieties, quantities & totals, one WhatsApp order) -->
+<div class="modal fade" id="cartModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-shopping-cart text-primary me-2"></i>My Cart</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="cartEmptyMsg" class="text-center text-muted py-4 d-none">
+          <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
+          <p class="mb-0">Your cart is empty. Please select a variety first.</p>
+        </div>
+        <div id="cartItemsContainer"></div>
+      </div>
+      <div class="modal-footer flex-column align-items-stretch" id="cartFooterTotal">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-bold">Grand Total:</span>
+          <span class="fw-bold text-primary fs-5">Rs. <span id="cartGrandTotal">0.00</span></span>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-danger" onclick="clearCart()"><i class="fas fa-trash me-1"></i> Clear</button>
+          <button class="btn btn-success flex-grow-1" onclick="sendCartWhatsApp()"><i class="fab fa-whatsapp me-1"></i> Send Order via WhatsApp</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cart "added" feedback toast -->
+<div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index:1080;">
+  <div id="cartToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body"><i class="fas fa-check-circle me-1"></i> Added to cart!</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
   </div>
 </div>
@@ -569,12 +627,19 @@ body { background: #f8fafc; }
   </div>
 </div>
 
-<a href="https://wa.me/94756617669" class="btn btn-success rounded-circle whatsapp-float p-3" id="floatWhatsappBtn"><i class="fab fa-whatsapp fa-2x"></i></a>
+<button class="btn btn-primary rounded-circle cart-float p-3 position-relative" id="cartFloatBtn" onclick="openCartModal()">
+  <i class="fas fa-shopping-cart fa-2x"></i>
+  <span id="cartBadge" class="badge bg-danger cart-badge d-none">0</span>
+</button>
 
 <div class="bottom-bar">
   <a href="tel: 0756617669" class="btn btn-warning flex-fill rounded-0" id="bottomCallBtn">Call</a>
   <a href="https://wa.me/94756617669" class="btn btn-success flex-fill rounded-0" id="bottomWhatsappBtn">WhatsApp</a>
   <a href="https://maps.google.com/?q=7.631175,81.759429" class="btn btn-primary flex-fill rounded-0" id="bottomMapBtn">Map </a>
+  <button type="button" class="btn btn-dark flex-fill rounded-0 position-relative" id="bottomCartBtn" onclick="openCartModal()">
+   🛒 Cart
+    <span id="cartBadgeBottom" class="badge bg-danger rounded-pill position-absolute d-none" style="top:4px; right:8px; font-size:0.65rem;">0</span>
+  </button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -603,6 +668,7 @@ let categories = [];
 const PRODUCTS_CACHE_KEY = 'ap_cached_products_v1';
 const CATEGORIES_CACHE_KEY = 'ap_cached_categories_v1';
 const SETTINGS_CACHE_KEY = 'ap_cached_settings_v1';
+const CART_CACHE_KEY = 'ap_cart_v1';
 
 function loadCache(key) {
   try {
@@ -857,8 +923,6 @@ function applySettingsToPage() {
     const waBase = `https://wa.me/${s.whatsappNumber}`;
     const heroWa = document.getElementById('heroWhatsappBtn');
     if (heroWa) heroWa.href = waBase;
-    const floatWa = document.getElementById('floatWhatsappBtn');
-    if (floatWa) floatWa.href = waBase;
     const bottomWa = document.getElementById('bottomWhatsappBtn');
     if (bottomWa) bottomWa.href = waBase;
   }
@@ -1174,8 +1238,11 @@ function renderProducts() {
             ` : ''}
 
             <div class="d-flex gap-2 mt-2">
-              <button class="btn btn-success flex-grow-1" ${!p.stock ? 'disabled' : ''} onclick="openOrderModal('${p.code}')">
+              <button class="btn btn-success flex-grow-1" ${!p.stock ? 'disabled' : ''} onclick="openOrderModal('${p.code}', 'order')">
                 <i class="fab fa-whatsapp me-1"></i> ${p.stock ? 'Order' : 'Out of Stock'}
+              </button>
+              <button class="btn btn-primary flex-grow-1" ${!p.stock ? 'disabled' : ''} onclick="openOrderModal('${p.code}', 'cart')">
+                <i class="fas fa-cart-plus me-1"></i> Add to Cart
               </button>
               <button class="btn btn-outline-primary" onclick="shareProduct('${p.code}')" title="Share this fish" aria-label="Share">
                 <i class="fas fa-share-alt"></i>
@@ -1347,10 +1414,47 @@ function stopVideo() {
 }
 
 /* =========================================================
-   Order (with quantity selection)
+   Cart (multiple varieties, quantities & totals, then a
+   single WhatsApp message for the whole order)
    ========================================================= */
 
-function openOrderModal(code) {
+let cart = [];
+
+function loadCartFromStorage() {
+  const saved = loadCache(CART_CACHE_KEY);
+  if (Array.isArray(saved)) cart = saved;
+  updateCartBadge();
+}
+
+function saveCart() {
+  saveCache(CART_CACHE_KEY, cart);
+  updateCartBadge();
+}
+
+function updateCartBadge() {
+  const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+  [document.getElementById('cartBadge'), document.getElementById('cartBadgeBottom')].forEach((badge) => {
+    if (!badge) return;
+    if (totalQty > 0) {
+      badge.textContent = totalQty;
+      badge.classList.remove('d-none');
+    } else {
+      badge.classList.add('d-none');
+    }
+  });
+}
+
+function cartTotal() {
+  return cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+}
+
+function showCartToast(msg) {
+  const toastEl = document.getElementById('cartToast');
+  toastEl.querySelector('.toast-body').innerHTML = `<i class="fas fa-check-circle me-1"></i> ${msg}`;
+  bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 1800 }).show();
+}
+
+function openOrderModal(code, mode) {
   const p = products.find(item => String(item.code) === String(code));
   if (!p) return;
 
@@ -1372,8 +1476,29 @@ function openOrderModal(code) {
   }
 
   document.getElementById('orderQty').value = 1;
+  updateOrderModalLineTotal();
+
+  const titleEl = document.getElementById('orderModalTitle');
+  const orderNowBtn = document.getElementById('orderNowBtn');
+  const addToCartBtn = document.getElementById('addToCartBtn');
+
+  if (mode === 'cart') {
+    titleEl.innerHTML = '<i class="fas fa-cart-plus text-primary me-2"></i>Add to Cart';
+    orderNowBtn.classList.add('d-none');
+    addToCartBtn.classList.remove('d-none');
+  } else {
+    titleEl.innerHTML = '<i class="fab fa-whatsapp text-success me-2"></i>Order';
+    orderNowBtn.classList.remove('d-none');
+    addToCartBtn.classList.add('d-none');
+  }
 
   new bootstrap.Modal(document.getElementById('orderModal')).show();
+}
+
+function updateOrderModalLineTotal() {
+  const price = parseFloat(document.getElementById('orderPrice').value) || 0;
+  const qty = Math.max(1, parseInt(document.getElementById('orderQty').value, 10) || 1);
+  document.getElementById('orderModalLineTotal').textContent = (price * qty).toFixed(2);
 }
 
 function changeOrderQty(delta) {
@@ -1381,9 +1506,43 @@ function changeOrderQty(delta) {
   let val = parseInt(input.value, 10) || 1;
   val = Math.max(1, val + delta);
   input.value = val;
+  updateOrderModalLineTotal();
 }
 
-function confirmOrderWhatsApp() {
+document.getElementById('orderQty').addEventListener('input', updateOrderModalLineTotal);
+
+function addToCart(code, qty, name, category, price) {
+  qty = Math.max(1, parseInt(qty, 10) || 1);
+
+  const existing = cart.find(item => String(item.code) === String(code));
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    cart.push({ code, category: category || '', name, price: parseFloat(price), qty });
+  }
+  saveCart();
+}
+
+function addCurrentSelectionToCart() {
+  const code = document.getElementById('orderCode').value;
+  const category = document.getElementById('orderCategory').value;
+  const name = document.getElementById('orderName').value;
+  const price = document.getElementById('orderPrice').value;
+  const qty = Math.max(1, parseInt(document.getElementById('orderQty').value, 10) || 1);
+
+  addToCart(code, qty, name, category, price);
+
+  const modalEl = document.getElementById('orderModal');
+  const modalInstance = bootstrap.Modal.getInstance(modalEl);
+  if (modalInstance) modalInstance.hide();
+
+  showCartToast(`${name} added to cart!`);
+}
+
+// Direct single-item order: sends just this one variety straight to
+// WhatsApp right away (kept alongside "Add to Cart" so customers who
+// only want one item don't have to go via the cart at all).
+function placeSingleOrderWhatsApp() {
   const code = document.getElementById('orderCode').value;
   const category = document.getElementById('orderCategory').value;
   const name = document.getElementById('orderName').value;
@@ -1398,7 +1557,8 @@ function confirmOrderWhatsApp() {
     `Category: ${category || '-'}\n` +
     `Variety Name: ${name}\n` +
     `Price per Pair: Rs. ${parseFloat(price).toFixed(2)}\n` +
-    `Qty: ${qty}\n\n` +
+    `Qty: ${qty}\n` +
+    `Total: Rs. ${(parseFloat(price) * qty).toFixed(2)}\n\n` +
     `Please confirm availability.`;
 
   window.open(`https://wa.me/${orderNumber}?text=${encodeURIComponent(message)}`, '_blank');
@@ -1407,6 +1567,90 @@ function confirmOrderWhatsApp() {
   const modalInstance = bootstrap.Modal.getInstance(modalEl);
   if (modalInstance) modalInstance.hide();
 }
+
+function changeCartQty(code, delta) {
+  const item = cart.find(item => String(item.code) === String(code));
+  if (!item) return;
+  item.qty = Math.max(1, item.qty + delta);
+  saveCart();
+  renderCartModal();
+}
+
+function removeFromCart(code) {
+  cart = cart.filter(item => String(item.code) !== String(code));
+  saveCart();
+  renderCartModal();
+}
+
+function clearCart() {
+  if (!cart.length) return;
+  if (!confirm('Clear all items from cart?')) return;
+  cart = [];
+  saveCart();
+  renderCartModal();
+}
+
+function renderCartModal() {
+  const container = document.getElementById('cartItemsContainer');
+  const emptyMsg = document.getElementById('cartEmptyMsg');
+  const footer = document.getElementById('cartFooterTotal');
+
+  if (!cart.length) {
+    container.innerHTML = '';
+    emptyMsg.classList.remove('d-none');
+    footer.classList.add('d-none');
+    return;
+  }
+
+  emptyMsg.classList.add('d-none');
+  footer.classList.remove('d-none');
+
+  container.innerHTML = cart.map(item => `
+    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+      <div class="flex-grow-1 me-2">
+        <div class="fw-bold small">${item.name}</div>
+        <div class="text-muted" style="font-size:0.75rem;">Code: ${item.code}${item.category ? ' • ' + item.category : ''}</div>
+        <div class="text-primary small">Rs. ${item.price.toFixed(2)} x ${item.qty} = <strong>Rs. ${(item.price * item.qty).toFixed(2)}</strong></div>
+      </div>
+      <div class="d-flex align-items-center gap-1">
+        <button class="btn btn-sm btn-outline-secondary" onclick="changeCartQty('${item.code}', -1)"><i class="fas fa-minus"></i></button>
+        <span class="px-2">${item.qty}</span>
+        <button class="btn btn-sm btn-outline-secondary" onclick="changeCartQty('${item.code}', 1)"><i class="fas fa-plus"></i></button>
+        <button class="btn btn-sm btn-outline-danger ms-1" onclick="removeFromCart('${item.code}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('cartGrandTotal').textContent = cartTotal().toFixed(2);
+}
+
+function openCartModal() {
+  renderCartModal();
+  new bootstrap.Modal(document.getElementById('cartModal')).show();
+}
+
+function sendCartWhatsApp() {
+  if (!cart.length) return;
+
+  const orderNumber = (siteSettings && siteSettings.whatsappNumber) ? siteSettings.whatsappNumber : '94743050233';
+
+  let message = `Hello\n\nI would like to order the following varieties:\n\n`;
+  cart.forEach((item, idx) => {
+    message += `${idx + 1}. ${item.name} (Code: ${item.code}${item.category ? ', ' + item.category : ''})\n` +
+               `    Qty: ${item.qty} x Rs. ${item.price.toFixed(2)} = Rs. ${(item.price * item.qty).toFixed(2)}\n`;
+  });
+  message += `\nTotal: Rs. ${cartTotal().toFixed(2)}\n\nPlease confirm availability.`;
+
+  window.open(`https://wa.me/${orderNumber}?text=${encodeURIComponent(message)}`, '_blank');
+
+  const modalEl = document.getElementById('cartModal');
+  const modalInstance = bootstrap.Modal.getInstance(modalEl);
+  if (modalInstance) modalInstance.hide();
+}
+
+loadCartFromStorage();
+
+
 
 /**
  * Downloads an image URL into a File object, for attaching to a Web
