@@ -1643,6 +1643,11 @@ function sendCartWhatsApp() {
 
   window.open(`https://wa.me/${orderNumber}?text=${encodeURIComponent(message)}`, '_blank');
 
+  // Order sent — empty the cart so it doesn't carry over to the next visit.
+  cart = [];
+  saveCart();
+  renderCartModal();
+
   const modalEl = document.getElementById('cartModal');
   const modalInstance = bootstrap.Modal.getInstance(modalEl);
   if (modalInstance) modalInstance.hide();
