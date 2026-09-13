@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="AP Aquarium">
-<link rel="apple-touch-icon" href="images/icon-192.png">
+<link rel="apple-touch-icon" href="https://drive.google.com/thumbnail?id=1q0j1zNz51Jao_AKjVGKhAi8u8qpw39Wu&sz=w1000">
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
@@ -179,6 +179,51 @@ body { background: #f8fafc; }
   border: 2px solid #0d6efd;
   animation: highlightPulse 1.4s ease-out 3;
 }
+
+/* Admin panel bottom tab bar (mobile app style) */
+#adminPanel { padding-bottom: 76px; }
+
+.admin-tab-bar {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  background: #1f2937;
+  z-index: 1030;
+  box-shadow: 0 -3px 12px rgba(0,0,0,0.2);
+}
+
+.admin-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  padding: 10px 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: color .15s ease, background .15s ease;
+}
+
+.admin-tab-btn i { font-size: 1.15rem; }
+
+.admin-tab-btn.active {
+  color: #ffffff;
+  background: #0d6efd;
+}
+
+@media (max-width: 768px) {
+  .admin-tab-bar { bottom: 60px; }
+}
+
+/* Admin button stays hidden from everyone at all times.
+   The admin panel is opened only via the secret tap gesture
+   on the hero title (5 quick taps). */
+#adminAuthBtn { display: none !important; }
 </style>
 </head>
 <body>
@@ -200,146 +245,174 @@ body { background: #f8fafc; }
 <!-- Admin Management Panel -->
 <section id="adminPanel" class="container mt-4 d-none">
 
-  <!-- Site Settings Manager -->
-  <div class="card border-success shadow-sm mb-3">
-    <div class="card-header bg-success text-white">
-      <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Site Settings</h6>
-    </div>
-    <div class="card-body">
-      <form id="settingsForm" onsubmit="handleSettingsSubmit(event)">
-        <div class="row g-3">
-          <div class="col-md-4">
-            <label class="form-label small fw-bold">Business Name</label>
-            <input type="text" id="settingSiteName" class="form-control" placeholder="AP Aquarium">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label small fw-bold">Mobile Number (Call)</label>
-            <input type="text" id="settingPhone" class="form-control" placeholder="e.g. 0756617669">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label small fw-bold">WhatsApp Number</label>
-            <input type="text" id="settingWhatsapp" class="form-control" placeholder="e.g. 94756617669 (with country code, no +)">
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label small fw-bold">WhatsApp Group Link</label>
-            <input type="url" id="settingWhatsappGroup" class="form-control" placeholder="https://chat.whatsapp.com/...">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-bold">Facebook Link</label>
-            <input type="url" id="settingFacebook" class="form-control" placeholder="https://facebook.com/...">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-bold">TikTok Link</label>
-            <input type="url" id="settingTiktok" class="form-control" placeholder="https://tiktok.com/@...">
-          </div>
-
-          <div class="col-md-3">
-            <label class="form-label small fw-bold">Map Latitude</label>
-            <input type="text" id="settingMapLat" class="form-control" placeholder="7.631175">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-bold">Map Longitude</label>
-            <input type="text" id="settingMapLng" class="form-control" placeholder="81.759429">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label small fw-bold">Address</label>
-            <input type="text" id="settingAddress" class="form-control" placeholder="Main Street, Puthukkudiyiruppu, Batticaloa">
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label small fw-bold">Logo Image (leave blank to keep current)</label>
-            <input type="file" id="settingLogoFile" class="form-control" accept="image/*">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label small fw-bold">Background Photo (leave blank to keep current)</label>
-            <input type="file" id="settingBgFile" class="form-control" accept="image/*">
-          </div>
-
-          <div class="col-12 text-end">
-            <button type="submit" class="btn btn-success" id="saveSettingsBtn"><i class="fas fa-save me-1"></i> Save Settings</button>
-          </div>
-        </div>
-      </form>
-    </div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Admin Dashboard</h5>
+    <button class="btn btn-sm btn-danger" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
   </div>
 
-  <!-- Category Manager -->
-  <div class="card border-info shadow-sm mb-3">
-    <div class="card-header bg-info text-white">
-      <h6 class="mb-0"><i class="fas fa-tags me-2"></i>Manage Categories</h6>
-    </div>
-    <div class="card-body">
-      <div class="input-group mb-3" style="max-width:400px;">
-        <input type="text" id="newCategoryInput" class="form-control" placeholder="e.g. Guppy, Molly, Betta">
-        <button class="btn btn-info text-white" onclick="addCategory()"><i class="fas fa-plus me-1"></i> Add</button>
+  <!-- TAB 1: Add / Edit Fish Variety (Home) -->
+  <div class="admin-tab-pane" id="adminTabPane-home">
+    <div class="card border-primary shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="fas fa-fish me-2"></i>Fish Varieties</h6>
       </div>
-      <div class="d-flex flex-wrap gap-2" id="categoryChipList"></div>
+      <div class="card-body">
+        <h6 class="fw-bold mb-3" id="formTitle">Add New Fish Variety</h6>
+        <form id="fishForm" onsubmit="handleFormSubmit(event)">
+          <input type="hidden" id="existingImage" value="">
+          <input type="hidden" id="existingVideo" value="">
+          <input type="hidden" id="editingCode" value="">
+          <div class="row g-3">
+            <div class="col-md-2">
+              <label class="form-label small fw-bold">Code No. (Auto)</label>
+              <input type="text" id="fishCode" class="form-control" readonly>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Variety Name</label>
+              <input type="text" id="fishName" class="form-control" placeholder="e.g. Red Rose Guppy" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-bold">Price per Pair (Rs.)</label>
+              <input type="number" step="0.01" id="fishPrice" class="form-control" placeholder="1200" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-bold">Stock Availability</label>
+              <select id="fishStock" class="form-select">
+                <option value="true">In Stock</option>
+                <option value="false">Out of Stock</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Category</label>
+              <select id="fishCategory" class="form-select">
+                <option value="">Uncategorized</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Upload Image</label>
+              <input type="file" id="fishImageFile" class="form-control" accept="image/*">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Upload Video (optional)</label>
+              <input type="file" id="fishVideoFile" class="form-control" accept="video/*">
+            </div>
+
+            <div class="col-12 text-end">
+              <button type="button" class="btn btn-secondary d-none" id="cancelEditBtn" onclick="resetForm()">Cancel Edit</button>
+              <button type="submit" class="btn btn-primary" id="saveBtn"><i class="fas fa-plus me-1"></i> Save Variety</button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
-  <div class="card border-primary shadow-sm">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-      <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Admin Dashboard</h5>
-      <button class="btn btn-sm btn-danger" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
-    </div>
-    <div class="card-body">
-      <h6 class="fw-bold mb-3" id="formTitle">Add New Fish Variety</h6>
-      <form id="fishForm" onsubmit="handleFormSubmit(event)">
-        <input type="hidden" id="existingImage" value="">
-        <input type="hidden" id="existingVideo" value="">
-        <input type="hidden" id="editingCode" value="">
-        <div class="row g-3">
-          <div class="col-md-2">
-            <label class="form-label small fw-bold">Code No. (Auto)</label>
-            <input type="text" id="fishCode" class="form-control" readonly>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label small fw-bold">Variety Name</label>
-            <input type="text" id="fishName" class="form-control" placeholder="e.g. Red Rose Guppy" required>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-bold">Price per Pair (Rs.)</label>
-            <input type="number" step="0.01" id="fishPrice" class="form-control" placeholder="1200" required>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label small fw-bold">Stock Availability</label>
-            <select id="fishStock" class="form-select">
-              <option value="true">In Stock</option>
-              <option value="false">Out of Stock</option>
-            </select>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label small fw-bold">Category</label>
-            <select id="fishCategory" class="form-select">
-              <option value="">Uncategorized</option>
-            </select>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label small fw-bold">Upload Image</label>
-            <input type="file" id="fishImageFile" class="form-control" accept="image/*">
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label small fw-bold">Upload Video (optional)</label>
-            <input type="file" id="fishVideoFile" class="form-control" accept="video/*">
-          </div>
-
-          <div class="col-12 text-end">
-            <button type="button" class="btn btn-secondary d-none" id="cancelEditBtn" onclick="resetForm()">Cancel Edit</button>
-            <button type="submit" class="btn btn-primary" id="saveBtn"><i class="fas fa-plus me-1"></i> Save Variety</button>
-          </div>
+  <!-- TAB 2: Manage Categories -->
+  <div class="admin-tab-pane d-none" id="adminTabPane-categories">
+    <div class="card border-info shadow-sm">
+      <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><i class="fas fa-tags me-2"></i>Manage Categories</h6>
+      </div>
+      <div class="card-body">
+        <div class="input-group mb-3" style="max-width:400px;">
+          <input type="text" id="newCategoryInput" class="form-control" placeholder="e.g. Guppy, Molly, Betta">
+          <button class="btn btn-info text-white" onclick="addCategory()"><i class="fas fa-plus me-1"></i> Add</button>
         </div>
-      </form>
+        <div class="d-flex flex-wrap gap-2" id="categoryChipList"></div>
+      </div>
     </div>
   </div>
+
+  <!-- TAB 3: Site Settings -->
+  <div class="admin-tab-pane d-none" id="adminTabPane-settings">
+    <div class="card border-success shadow-sm">
+      <div class="card-header bg-success text-white">
+        <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Site Settings</h6>
+      </div>
+      <div class="card-body">
+        <form id="settingsForm" onsubmit="handleSettingsSubmit(event)">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Business Name</label>
+              <input type="text" id="settingSiteName" class="form-control" placeholder="AP Aquarium">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Mobile Number (Call)</label>
+              <input type="text" id="settingPhone" class="form-control" placeholder="e.g. 0756617669">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">WhatsApp Number</label>
+              <input type="text" id="settingWhatsapp" class="form-control" placeholder="e.g. 94756617669 (with country code, no +)">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">WhatsApp Group Link</label>
+              <input type="url" id="settingWhatsappGroup" class="form-control" placeholder="https://chat.whatsapp.com/...">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-bold">Facebook Link</label>
+              <input type="url" id="settingFacebook" class="form-control" placeholder="https://facebook.com/...">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-bold">TikTok Link</label>
+              <input type="url" id="settingTiktok" class="form-control" placeholder="https://tiktok.com/@...">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label small fw-bold">Map Latitude</label>
+              <input type="text" id="settingMapLat" class="form-control" placeholder="7.631175">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-bold">Map Longitude</label>
+              <input type="text" id="settingMapLng" class="form-control" placeholder="81.759429">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Address</label>
+              <input type="text" id="settingAddress" class="form-control" placeholder="Main Street, Puthukkudiyiruppu, Batticaloa">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Logo Image (leave blank to keep current)</label>
+              <input type="file" id="settingLogoFile" class="form-control" accept="image/*">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Background Photo (leave blank to keep current)</label>
+              <input type="file" id="settingBgFile" class="form-control" accept="image/*">
+            </div>
+
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-success" id="saveSettingsBtn"><i class="fas fa-save me-1"></i> Save Settings</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile-style bottom navigation for the 3 admin tabs -->
+  <div class="admin-tab-bar" id="adminTabBar">
+    <button type="button" class="admin-tab-btn active" data-tab="home" onclick="switchAdminTab('home')">
+      <i class="fas fa-fish"></i>
+      <span>Add Fish</span>
+    </button>
+    <button type="button" class="admin-tab-btn" data-tab="categories" onclick="switchAdminTab('categories')">
+      <i class="fas fa-tags"></i>
+      <span>Categories</span>
+    </button>
+    <button type="button" class="admin-tab-btn" data-tab="settings" onclick="switchAdminTab('settings')">
+      <i class="fas fa-sliders-h"></i>
+      <span>Settings</span>
+    </button>
+  </div>
+
 </section>
 
 <!-- Hero Section -->
 <section class="hero text-center" id="heroSection">
-  <h1 class="fw-bold display-5" id="siteNameHero">Ap Aquarium </h1>
+  <h1 class="fw-bold display-5" id="siteNameHero" onclick="handleSecretAdminTap()" style="-webkit-tap-highlight-color: transparent; user-select: none;">Ap Aquarium </h1>
   <p class="lead fw-semibold">Delivery Available • Wholesale Available</p>
   <div class="d-flex justify-content-center gap-2 mt-3">
     <a href="tel: 0756617669" class="btn btn-warning fw-semibold" id="heroCallBtn"><i class="fas fa-phone me-1"></i> Call Now</a>
@@ -348,9 +421,9 @@ body { background: #f8fafc; }
 </section>
 
 <section class="container py-3 text-center d-flex justify-content-center gap-2 flex-wrap">
-  <a href="https://www.facebook.com/profile.php?id=61585207718993&sfnsn=wa" class="btn btn-primary btn-sm" target="_blank" id="facebookLinkBtn"><i class="fab fa-facebook me-1"></i> Facebook</a>
-  <a href="https://tiktok.com/@batti.guppy.house" class="btn btn-dark btn-sm" target="_blank" id="tiktokLinkBtn"><i class="fab fa-tiktok me-1"></i> TikTok</a>
-  <a href="https://chat.whatsapp.com/FdpiQort7mE0Wv2j5dtNOC?s=cl&p=a&mlu=1&ilr=0&amv=1" class="btn btn-success btn-sm" target="_blank" id="whatsappGroupBtn"><i class="fab fa-whatsapp me-1"></i> WhatsApp Group</a>
+  <a href="#" class="btn btn-primary btn-sm d-none" target="_blank" id="facebookLinkBtn"><i class="fab fa-facebook me-1"></i> Facebook</a>
+  <a href="#" class="btn btn-dark btn-sm d-none" target="_blank" id="tiktokLinkBtn"><i class="fab fa-tiktok me-1"></i> TikTok</a>
+  <a href="#" class="btn btn-success btn-sm d-none" target="_blank" id="whatsappGroupBtn"><i class="fab fa-whatsapp me-1"></i> WhatsApp Group</a>
 </section>
 
 <!-- Filter Controls -->
@@ -514,7 +587,43 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9A6CFhDgd6n-0
 
 let products = [];
 let categories = [];
+
+/* =========================================================
+   Instant-load cache for "Available Varieties"
+   ---------------------------------------------------------
+   The product/category data comes from Google Apps Script,
+   which can take a moment to respond (especially on first
+   load / cold start). To avoid visitors seeing a slow spinner
+   every time, we keep the last successful result in
+   localStorage and paint it immediately on page load, then
+   quietly refresh it in the background from the server. Once
+   the fresh data arrives it silently replaces the cached
+   version — the visitor never has to wait to see fish.
+   ========================================================= */
+const PRODUCTS_CACHE_KEY = 'ap_cached_products_v1';
+const CATEGORIES_CACHE_KEY = 'ap_cached_categories_v1';
+const SETTINGS_CACHE_KEY = 'ap_cached_settings_v1';
+
+function loadCache(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveCache(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { /* ignore quota errors */ }
+}
 let siteSettings = {};
+
+// Permanent default logo & hero background. These display for every
+// visitor by default. If the admin uploads/sets a different logo or
+// background photo from the Admin panel, that admin-set image always
+// takes priority over these defaults.
+const DEFAULT_LOGO_URL = 'https://drive.google.com/thumbnail?id=1q0j1zNz51Jao_AKjVGKhAi8u8qpw39Wu&sz=w1000';
+const DEFAULT_HERO_BG_URL = 'https://drive.google.com/thumbnail?id=1IVRU2Mh5rZYe9ApQpQdvsmrBa4Jjsq8f&sz=w1000';
 let isAdminLoggedIn = false;
 
 // Code of the product to highlight after a shared link is opened
@@ -532,6 +641,24 @@ const loadingIndicator = document.getElementById('loadingIndicator');
 // Check saved admin login session
 if (localStorage.getItem('ap_admin_auth') === 'true') {
   setAdminState(true);
+}
+
+// Secret admin access: tap the hero title 5 times within 2 seconds
+// to reveal the admin login prompt. No visible button is shown to
+// regular visitors.
+let secretTapCount = 0;
+let secretTapResetTimer = null;
+function handleSecretAdminTap() {
+  secretTapCount++;
+
+  clearTimeout(secretTapResetTimer);
+  secretTapResetTimer = setTimeout(() => { secretTapCount = 0; }, 2000);
+
+  if (secretTapCount >= 5) {
+    secretTapCount = 0;
+    clearTimeout(secretTapResetTimer);
+    toggleAdminLogin();
+  }
 }
 
 async function toggleAdminLogin() {
@@ -585,6 +712,7 @@ function setAdminState(loggedIn) {
     renderCategoryChips();
     fetchNextCode();
     populateSettingsForm();
+    switchAdminTab('home');
   } else {
     localStorage.removeItem('ap_admin_auth');
     document.getElementById('adminPanel').classList.add('d-none');
@@ -594,18 +722,46 @@ function setAdminState(loggedIn) {
   renderProducts();
 }
 
+/**
+ * Switches between the 3 admin tabs (Add Fish / Categories / Settings),
+ * showing only the selected pane and highlighting its nav button — like
+ * a mobile app's bottom navigation.
+ */
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab-pane').forEach(pane => pane.classList.add('d-none'));
+  const activePane = document.getElementById('adminTabPane-' + tab);
+  if (activePane) activePane.classList.remove('d-none');
+
+  document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.querySelector(`.admin-tab-btn[data-tab="${tab}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  document.getElementById('adminPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function logoutAdmin() {
   setAdminState(false);
   resetForm();
 }
 
 async function fetchProducts() {
-  loadingIndicator.classList.remove('d-none');
+  // 1) Instant paint from cache (if we have one from a previous visit).
+  const cached = loadCache(PRODUCTS_CACHE_KEY);
+  if (cached && cached.length) {
+    products = cached;
+    renderProducts();
+    loadingIndicator.classList.add('d-none');
+  } else {
+    loadingIndicator.classList.remove('d-none');
+  }
+
+  // 2) Fetch the latest data in the background and silently replace it.
   try {
     const response = await fetch(`${APPS_SCRIPT_URL}?action=get&_=${Date.now()}`, { cache: 'no-store' });
     const result = await response.json();
     if (result.status === 'success') {
       products = result.data;
+      saveCache(PRODUCTS_CACHE_KEY, products);
       renderProducts();
     }
   } catch (error) {
@@ -616,11 +772,18 @@ async function fetchProducts() {
 }
 
 async function fetchCategories() {
+  const cached = loadCache(CATEGORIES_CACHE_KEY);
+  if (cached && cached.length) {
+    categories = cached;
+    populateCategorySelects();
+    renderCategoryChips();
+  }
   try {
     const response = await fetch(`${APPS_SCRIPT_URL}?action=getCategories&_=${Date.now()}`, { cache: 'no-store' });
     const result = await response.json();
     if (result.status === 'success') {
       categories = result.data;
+      saveCache(CATEGORIES_CACHE_KEY, categories);
       populateCategorySelects();
       renderCategoryChips();
     }
@@ -647,11 +810,18 @@ async function fetchNextCode() {
    ========================================================= */
 
 async function fetchSettings() {
+  const cached = loadCache(SETTINGS_CACHE_KEY);
+  if (cached) {
+    siteSettings = cached;
+    applySettingsToPage();
+    populateSettingsForm();
+  }
   try {
     const response = await fetch(`${APPS_SCRIPT_URL}?action=getSettings&_=${Date.now()}`, { cache: 'no-store' });
     const result = await response.json();
     if (result.status === 'success') {
       siteSettings = result.data || {};
+      saveCache(SETTINGS_CACHE_KEY, siteSettings);
       applySettingsToPage();
       populateSettingsForm();
     }
@@ -670,8 +840,8 @@ function applySettingsToPage() {
     if (el) el.textContent = siteName;
   });
 
-  applyLogoImage(s.logoImage);
-  applyHeroBackground(s.heroBgImage);
+  applyLogoImage(s.logoImage || DEFAULT_LOGO_URL);
+  applyHeroBackground(s.heroBgImage || DEFAULT_HERO_BG_URL);
 
   if (s.phone) {
     const telHref = `tel: ${s.phone}`;
@@ -695,17 +865,26 @@ function applySettingsToPage() {
 
   if (s.whatsappGroupLink) {
     const el = document.getElementById('whatsappGroupBtn');
-    if (el) el.href = s.whatsappGroupLink;
+    if (el) { el.href = s.whatsappGroupLink; el.classList.remove('d-none'); }
+  } else {
+    const el = document.getElementById('whatsappGroupBtn');
+    if (el) el.classList.add('d-none');
   }
 
   if (s.facebookLink) {
     const el = document.getElementById('facebookLinkBtn');
-    if (el) el.href = s.facebookLink;
+    if (el) { el.href = s.facebookLink; el.classList.remove('d-none'); }
+  } else {
+    const el = document.getElementById('facebookLinkBtn');
+    if (el) el.classList.add('d-none');
   }
 
   if (s.tiktokLink) {
     const el = document.getElementById('tiktokLinkBtn');
-    if (el) el.href = s.tiktokLink;
+    if (el) { el.href = s.tiktokLink; el.classList.remove('d-none'); }
+  } else {
+    const el = document.getElementById('tiktokLinkBtn');
+    if (el) el.classList.add('d-none');
   }
 
   if (s.mapLat && s.mapLng) {
@@ -1283,9 +1462,9 @@ async function shareProduct(code) {
   const productLink = `${baseUrl}?product=${encodeURIComponent(p.code)}`;
 
   const shareText =
-    `${p.name}\n` +
-    `Code No: ${p.code}\n` +
-    `Price: Rs. ${parseFloat(p.price).toFixed(2)} / Pair\n\n` +
+    `🐟 ${p.name}\n` +
+    `📌 Code No: ${p.code}\n` +
+    `💰 Price: Rs. ${parseFloat(p.price).toFixed(2)} / Pair\n\n` +
     `${siteName} (${phone})\n\n` +
     `👇 Check out this product on our website:\n${productLink}`;
 
@@ -1340,6 +1519,8 @@ sortBy.addEventListener('change', renderProducts);
 filterStock.addEventListener('change', renderProducts);
 filterCategory.addEventListener('change', renderProducts);
 
+applyLogoImage(DEFAULT_LOGO_URL);
+applyHeroBackground(DEFAULT_HERO_BG_URL);
 fetchSettings();
 fetchCategories();
 fetchProducts();
